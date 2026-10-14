@@ -136,7 +136,7 @@ return array(
 		'Remover dos favoritos' => 'Remove from favorites',
 		'Cartucho cromado exclusivo da pré-venda' => 'Pre-order exclusive chrome cartridge',
 		'Pré-venda limitada. Envio estimado em 30 dias.' => 'Limited pre-order. Estimated shipping in 30 days.',
-		'Edição exclusiva de pré-venda com cartucho cromado' => 'Exclusive pre-order edition with chrome cartridge',
+		'Edição regular - cartucho branco' => 'Regular edition - white cartridge',
 		'Cartucho para Mega Drive / Genesis' => 'Cartridge for Mega Drive / Genesis',
 		'Cartucho para Mega Drive' => 'Cartridge for Mega Drive',
 		'Versão especial durante a Pré-Order em shell cromado em prata.' => 'Special pre-order version in a silver chrome shell.',

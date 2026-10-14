@@ -776,7 +776,7 @@ function versao_ltda_render_product_card( $product, $index = 1, $wishlist_mode =
 	$sku          = $product->get_sku();
 	$label        = $sku ? '#' . $sku : sprintf( '#%03d', $index );
 	$platform     = $product->get_attribute( 'plataforma' ) ?: $product->get_attribute( 'pa_plataforma' );
-	$edition      = $product->get_meta( '_versao_ltda_edition' ) ?: __( 'Pre-Order Version', 'versao-ltda-theme' );
+	$edition      = $product->get_meta( '_versao_ltda_edition' ) ?: __( '', 'versao-ltda-theme' );
 	$action       = versao_ltda_get_product_action_from_product( $product );
 	$product_name = $product->get_name();
 	$wishlist_ids = versao_ltda_get_wishlist_product_ids();

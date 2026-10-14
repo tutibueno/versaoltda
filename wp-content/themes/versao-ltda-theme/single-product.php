@@ -167,7 +167,7 @@ while ( have_posts() ) :
 					</div>
 
 					<section class="product-summary" aria-labelledby="product-title">
-						<p class="product-summary__eyebrow">#<?php echo esc_html( $sku ); ?> - <?php esc_html_e( 'Edição Exclusiva de Pré-Venda', 'versao-ltda-theme' ); ?></p>
+						<p class="product-summary__eyebrow">#<?php echo esc_html( $sku ); ?></p>
 						<h1 id="product-title"><?php echo esc_html( $product_name ); ?></h1>
 						<p class="product-summary__platform"><?php echo esc_html( $platform ); ?></p>
 
@@ -176,7 +176,6 @@ while ( have_posts() ) :
 							<?php echo $is_saved ? esc_html__( 'Remover dos favoritos', 'versao-ltda-theme' ) : esc_html__( 'Adicionar aos favoritos', 'versao-ltda-theme' ); ?>
 						</a>
 
-						<p class="product-summary__badge"><?php esc_html_e( 'Cartucho cromado exclusivo da pré-venda', 'versao-ltda-theme' ); ?></p>
 						<p class="product-summary__price"><?php echo wp_kses_post( $product->get_price_html() ?: wc_price( 399 ) ); ?></p>
 
 						<?php if ( ! empty( $action['disabled'] ) || $is_waiting_preorder ) : ?>
@@ -225,7 +224,7 @@ while ( have_posts() ) :
 						<?php endif; ?>
 
 						<ul class="product-summary__features">
-							<li><?php esc_html_e( 'Edição exclusiva de pré-venda com cartucho cromado', 'versao-ltda-theme' ); ?></li>
+							<li><?php esc_html_e( 'Edição regular - cartucho branco', 'versao-ltda-theme' ); ?></li>
 							<li><?php esc_html_e( 'Cartucho para Mega Drive / Genesis', 'versao-ltda-theme' ); ?></li>
 							<li><?php esc_html_e( 'Caixa premium e luva rígida', 'versao-ltda-theme' ); ?></li>
 							<li><?php esc_html_e( 'Manual, pôster e card numerado', 'versao-ltda-theme' ); ?></li>

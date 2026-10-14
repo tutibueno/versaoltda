@@ -41,7 +41,7 @@ $product_url      = $featured_product
 					</p>
 
 					<a class="button button--primary" href="<?php echo esc_url( $product_url ); ?>">
-						<?php esc_html_e( 'Conhecer Mais', 'versao-ltda-theme' ); ?>
+						<?php esc_html_e( 'Comprar Agora', 'versao-ltda-theme' ); ?>
 					</a>
 				</div>
 			</div>

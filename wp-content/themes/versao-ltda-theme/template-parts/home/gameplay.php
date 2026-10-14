@@ -8,21 +8,21 @@
 <section class="physical section" id="comprar">
 	<div class="container physical__grid">
 		<div class="physical__copy">
-			<p class="section-kicker"><?php esc_html_e( 'Exclusivo da Pré-Venda', 'versao-ltda-theme' ); ?></p>
+			<p class="section-kicker"><?php esc_html_e( 'Edição #001 - Versão Regular', 'versao-ltda-theme' ); ?></p>
 			<h2>
 				<span><?php esc_html_e( 'Cartucho cromado', 'versao-ltda-theme' ); ?></span>
 				<span><?php esc_html_e( 'especial somente', 'versao-ltda-theme' ); ?></span>
 				<span><?php esc_html_e( 'na pré-venda.', 'versao-ltda-theme' ); ?></span>
 			</h2>
-			<p><?php esc_html_e( 'A primeira edição de Demons of Asteborg, pela Versão LTDA, acompanha um cartucho cromado especial para marcar o lançamento #001 da coleção.', 'versao-ltda-theme' ); ?></p>
+			<p><?php esc_html_e( 'Demons of Asteborg, pela Versão LTDA, agora em cartucho branco, com a mesma embalagem premium e todos os itens colecionáveis da versão de pré-venda.', 'versao-ltda-theme' ); ?></p>
 			<a class="button button--primary" href="<?php echo esc_url( home_url( '/produto/demons-of-asteborg/' ) ); ?>">
-				<?php esc_html_e( 'Conhecer Mais', 'versao-ltda-theme' ); ?>
+				<?php esc_html_e( 'Comprar Agora', 'versao-ltda-theme' ); ?>
 			</a>
-			<p class="product-code">#001 / Demons of Asteborg / Mega Drive<br><?php esc_html_e( 'Cartucho Cromado | Versão Pré-Venda', 'versao-ltda-theme' ); ?></p>
+			<p class="product-code">#001 / Demons of Asteborg / Mega Drive<br><?php esc_html_e( 'Cartucho Branco | Versão Regular', 'versao-ltda-theme' ); ?></p>
 		</div>
 		<div class="physical__media" role="group" aria-label="<?php esc_attr_e( 'Passe o mouse ou use o foco para ver o interior do cartucho', 'versao-ltda-theme' ); ?>" tabindex="0">
-			<img class="physical__image physical__image--closed" src="<?php echo esc_url( vltda_asset( 'images/cartridge-chrome.png' ) ); ?>" alt="<?php esc_attr_e( 'Cartucho cromado de Demons of Asteborg', 'versao-ltda-theme' ); ?>" width="3840" height="2160" loading="lazy" decoding="async">
-			<img class="physical__image physical__image--open" src="<?php echo esc_url( vltda_asset( 'images/cartridge-chrome-pcb.png' ) ); ?>" alt="" width="3840" height="2160" loading="lazy" decoding="async" aria-hidden="true">
+			<img class="physical__image physical__image--closed" src="<?php echo esc_url( vltda_asset( 'images/cartridge-white.png' ) ); ?>" alt="<?php esc_attr_e( 'Cartucho cromado de Demons of Asteborg', 'versao-ltda-theme' ); ?>" width="3840" height="2160" loading="lazy" decoding="async">
+			<img class="physical__image physical__image--open" src="<?php echo esc_url( vltda_asset( 'images/cartridge-white-pcb.png' ) ); ?>" alt="" width="3840" height="2160" loading="lazy" decoding="async" aria-hidden="true">
 		</div>
 	</div>
 </section>
