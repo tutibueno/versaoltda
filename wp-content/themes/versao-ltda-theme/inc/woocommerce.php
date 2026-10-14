@@ -730,38 +730,8 @@ function versao_ltda_product_can_be_reserved( $product ) {
 		return false;
 	}
 
-	$state = $product->get_meta( '_versao_ltda_card_state' );
-
-	return ! in_array( $state, array( 'soon', 'sold' ), true )
-		&& $product->is_purchasable()
-		&& $product->is_in_stock();
+	return $product->is_purchasable() && $product->is_in_stock();
 }
-
-/**
- * Check whether sales are intentionally paused for a product.
- *
- * @param WC_Product $product Product object.
- * @return bool
- */
-function versao_ltda_product_sales_are_paused( $product ) {
-	if ( ! $product instanceof WC_Product ) {
-		return false;
-	}
-
-	return '001' === $product->get_sku() || 'demons-of-asteborg' === $product->get_slug();
-}
-
-/**
- * Prevent paused products from being purchased through direct cart URLs.
- *
- * @param bool       $is_purchasable Current purchasable state.
- * @param WC_Product $product Product object.
- * @return bool
- */
-function versao_ltda_pause_product_purchases( $is_purchasable, $product ) {
-	return versao_ltda_product_sales_are_paused( $product ) ? false : $is_purchasable;
-}
-add_filter( 'woocommerce_is_purchasable', 'versao_ltda_pause_product_purchases', 10, 2 );
 
 /**
  * Get product card action data from a product object.
@@ -770,40 +740,20 @@ add_filter( 'woocommerce_is_purchasable', 'versao_ltda_pause_product_purchases',
  * @return array
  */
 function versao_ltda_get_product_action_from_product( $product ) {
-	if ( versao_ltda_product_sales_are_paused( $product ) ) {
+	if ( ! $product->is_in_stock() || ! $product->is_purchasable() ) {
 		return array(
-			'label'      => __( 'Pré venda esgotada', 'versao-ltda-theme' ),
-			'class'      => 'is-paused',
+			'label'      => __( 'Esgotado', 'versao-ltda-theme' ),
+			'class'      => 'is-sold',
 			'href'       => get_permalink( $product->get_id() ),
 			'attributes' => ' aria-disabled="true"',
 			'disabled'   => true,
 		);
 	}
 
-	$state = $product->get_meta( '_versao_ltda_card_state' );
-
-	if ( 'soon' === $state ) {
-		return array(
-			'label'      => __( 'Em Breve', 'versao-ltda-theme' ),
-			'class'      => 'is-soon',
-			'href'       => get_permalink( $product->get_id() ),
-			'attributes' => ' aria-disabled="true"',
-		);
-	}
-
-	if ( 'sold' === $state || ! $product->is_in_stock() ) {
-		return array(
-			'label'      => __( 'Esgotado', 'versao-ltda-theme' ),
-			'class'      => 'is-sold',
-			'href'       => get_permalink( $product->get_id() ),
-			'attributes' => ' aria-disabled="true"',
-		);
-	}
-
 	$reserve_action = versao_ltda_get_reserve_action( $product->get_name() );
 
 	return array(
-		'label'      => __( 'Reservar agora', 'versao-ltda-theme' ),
+		'label'      => __( 'Comprar', 'versao-ltda-theme' ),
 		'class'      => 'is-available ' . $reserve_action['class'],
 		'href'       => $reserve_action['href'],
 		'attributes' => $reserve_action['attributes'],

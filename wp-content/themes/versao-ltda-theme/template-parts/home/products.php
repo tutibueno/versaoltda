@@ -21,13 +21,12 @@
 			? versao_ltda_get_catalog_products( array( 'limit' => $product_query_limit ) )
 			: array();
 
-		if ( $reservable_only && function_exists( 'versao_ltda_product_can_be_reserved' ) ) {
+		if ( $is_cart_page && function_exists( 'versao_ltda_product_can_be_reserved' ) ) {
 			$products = array_values(
 				array_filter(
 					$products,
-					static function ( $product ) use ( $is_games_page ) {
-						return versao_ltda_product_can_be_reserved( $product )
-							|| ( $is_games_page && function_exists( 'versao_ltda_product_sales_are_paused' ) && versao_ltda_product_sales_are_paused( $product ) );
+					static function ( $product ) {
+						return versao_ltda_product_can_be_reserved( $product );
 					}
 				)
 			);

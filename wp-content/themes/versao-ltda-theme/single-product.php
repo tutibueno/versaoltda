@@ -34,7 +34,7 @@ while ( have_posts() ) :
 	$is_saved     = in_array( $product_id, $wishlist_ids, true );
 	$wishlist_url = versao_ltda_get_wishlist_action_url( $product_id, $is_saved ? 'remove' : 'add' );
 	$is_demo      = '001' === $sku || 'demons-of-asteborg' === $product->get_slug();
-	$is_sales_paused = function_exists( 'versao_ltda_product_sales_are_paused' ) && versao_ltda_product_sales_are_paused( $product );
+	$is_sold_out  = ! empty( $action['disabled'] );
 	$is_waiting_preorder = false;
 	$short_copy   = trim( wp_strip_all_tags( $product->get_short_description() ) );
 	$full_copy    = trim( wp_strip_all_tags( $product->get_description() ) );
@@ -179,8 +179,8 @@ while ( have_posts() ) :
 						<p class="product-summary__badge"><?php esc_html_e( 'Cartucho cromado exclusivo da pré-venda', 'versao-ltda-theme' ); ?></p>
 						<p class="product-summary__price"><?php echo wp_kses_post( $product->get_price_html() ?: wc_price( 399 ) ); ?></p>
 
-						<?php if ( $is_sales_paused || $is_waiting_preorder ) : ?>
-							<button class="button product-summary__cta <?php echo esc_attr( $is_sales_paused ? 'is-paused' : 'is-soon' ); ?>" type="button" disabled>
+						<?php if ( ! empty( $action['disabled'] ) || $is_waiting_preorder ) : ?>
+							<button class="button product-summary__cta <?php echo esc_attr( $is_waiting_preorder ? 'is-soon' : trim( $action['class'] ) ); ?>" type="button" disabled>
 								<?php echo esc_html( $cta_label ); ?>
 							</button>
 						<?php else : ?>
@@ -189,8 +189,8 @@ while ( have_posts() ) :
 							</a>
 						<?php endif; ?>
 						<p class="product-summary__note">
-							<?php if ( $is_sales_paused ) : ?>
-								<?php esc_html_e( 'A pré-venda está temporariamente parada.', 'versao-ltda-theme' ); ?>
+							<?php if ( $is_sold_out ) : ?>
+								<?php esc_html_e( 'Produto esgotado no momento.', 'versao-ltda-theme' ); ?>
 							<?php elseif ( $is_waiting_preorder ) : ?>
 								<?php esc_html_e( 'A compra será liberada em 08.08.26.', 'versao-ltda-theme' ); ?>
 							<?php else : ?>
