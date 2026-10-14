@@ -46,3 +46,11 @@ wp-config.php
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Ambiente / logs
+.ftpquota
+error_log
+**/error_log
+
+# Vídeos grandes - mantidos apenas no servidor
+wp-content/themes/versao-ltda-theme/assets/videos/

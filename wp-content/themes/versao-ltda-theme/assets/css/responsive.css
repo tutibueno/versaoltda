@@ -67,6 +67,11 @@
 		padding-left: 0;
 	}
 
+	.physical img {
+		margin-left: 0;
+		width: 100%;
+	}
+
 	.feature-grid,
 	.product-grid,
 	.site-footer__inner {
@@ -82,7 +87,7 @@
 	}
 
 	.cart-page__item {
-		grid-template-columns: 150px minmax(0, 1fr);
+		grid-template-columns: 220px minmax(0, 1fr);
 	}
 
 	.cart-page__item-actions {
@@ -152,6 +157,10 @@
 		grid-template-columns: 1fr;
 	}
 
+	.contact-details {
+		padding-top: 0;
+	}
+
 	.account-auth {
 		gap: 42px;
 		grid-template-columns: 1fr;
@@ -163,6 +172,16 @@
 }
 
 @media (max-width: 700px) {
+	html {
+		scrollbar-width: none;
+	}
+
+	html::-webkit-scrollbar {
+		display: none;
+		height: 0;
+		width: 0;
+	}
+
 	.container {
 		padding-inline: 18px;
 	}
@@ -171,8 +190,79 @@
 		position: absolute;
 	}
 
+	.home .site-header {
+		position: relative;
+	}
+
 	.site-header__inner {
+		grid-template-areas:
+			"toggle branding actions"
+			"navigation navigation navigation";
+		grid-template-columns: minmax(60px, 1fr) auto minmax(60px, 1fr);
+		grid-template-rows: 72px auto;
+		gap: 0;
 		min-height: 72px;
+	}
+
+	.site-branding {
+		grid-area: branding;
+		justify-self: center;
+		padding-top: 0;
+	}
+
+	.site-logo {
+		padding: 15px;
+	}
+
+	.site-logo__image {
+		width: 110px;
+	}
+
+	.nav-toggle {
+		grid-area: toggle;
+		justify-self: start;
+	}
+
+	.primary-navigation {
+		grid-area: navigation;
+	}
+
+	.site-header__actions {
+		display: flex;
+		gap: 8px;
+		grid-area: actions;
+		justify-self: end;
+	}
+
+	.site-header__actions > :not(.header-action--account):not(.header-action--cart):not(.header-language) {
+		display: flex;
+	}
+
+	.site-header__actions .header-language {
+		display: none;
+	}
+
+	.primary-navigation .header-language--mobile {
+		display: flex;
+		margin-bottom: 12px;
+		padding-inline: 18px;
+	}
+
+	.primary-navigation .header-language--mobile .header-language__menu {
+		left: 18px;
+		position: static;
+		transform: none;
+		margin-top: 8px;
+	}
+
+	.site-header__actions .header-action {
+		height: 24px;
+		width: 24px;
+	}
+
+	.site-header__actions .header-action img {
+		height: 20px;
+		width: 20px;
 	}
 
 	.site-logo__bottom {
@@ -180,30 +270,98 @@
 	}
 
 	.hero,
-	.hero__content {
-		min-height: 640px;
+	.hero__content,
+	.hero__copy {
+		min-height: clamp(640px, 177.87vw, 760px);
+	}
+
+	.hero > .container {
+		height: 100%;
+		padding-inline: 0;
 	}
 
 	.hero__content {
-		align-items: flex-end;
-		padding-bottom: 42px;
+		align-items: stretch;
+		justify-content: flex-start;
+		padding-bottom: 0;
 	}
 
 	.hero__media {
-		background-position: 28% top;
+		background-image: url("../images/hero-mobile.jpg");
+		background-position: center top;
+		background-size: cover;
 	}
 
 	.hero__copy {
-		background: rgba(2, 7, 22, 0.56);
-		margin-inline: auto;
-		padding: 20px;
+		background: transparent;
+		margin: 0;
+		max-width: none;
+		padding: 0;
+		position: relative;
+		transform: none;
+		width: 100%;
+	}
+
+	.hero__release {
+		font-size: 0.78rem;
+		margin: 0;
+		padding: 0;
+		position: absolute;
+		right: 24px;
+		top: 18px;
+		z-index: 2;
+	}
+
+	.hero__logo {
+		left: 50%;
+		margin: 0;
+		max-width: 330px;
+		position: absolute;
+		top: 29px;
+		transform: translateX(-50%);
+		width: calc(100% - 44px);
 	}
 
 	.hero__description {
+		gap: 6px;
+		margin: 0;
+		max-width: 339px;
 		text-align: center;
 	}
 
-	.media-strip,
+	.hero__cta {
+		align-items: center;
+		background: rgba(2, 7, 22, 0.78);
+		bottom: 0;
+		left: 0;
+		margin: 0;
+		max-width: none;
+		padding: 24px 18px 30px;
+		position: absolute;
+		right: 0;
+	}
+
+	.hero__copy p.hero__description {
+		text-align: center;
+	}
+
+	.hero__description-title {
+		font-size: clamp(0.86rem, 4.1vw, 0.98rem);
+		line-height: 1.25;
+	}
+
+	.hero__description-text {
+		font-size: 0.82rem;
+		line-height: 1.45;
+	}
+
+	.hero__copy .button {
+		font-size: 1.2rem;
+		margin-top: 18px;
+		min-height: 46px;
+		min-width: 212px;
+	}
+
 	.quote-row,
 	.feature-grid,
 	.product-grid,
@@ -211,18 +369,94 @@
 		grid-template-columns: 1fr;
 	}
 
-	.media-strip {
-		gap: 10px;
+	.gameplay-carousel {
+		margin-bottom: 40px;
+		padding-inline: 0;
+		padding-bottom: 28px;
 	}
 
-	.quote-row blockquote {
-		border-radius: 999px;
-		min-height: 0;
+	.gameplay-carousel__viewport {
+		overflow: hidden;
+	}
+
+	.media-strip {
+		display: flex;
+		gap: 0;
+		margin-bottom: 0;
+		transition: transform 300ms ease;
+		will-change: transform;
+	}
+
+	.gameplay-carousel__slide {
+		flex: 0 0 100%;
+	}
+
+	.gameplay-carousel__arrow {
+		background-color: rgba(2, 7, 22, 0.82);
+		background-size: auto 24px;
+		border: 1px solid rgba(255, 255, 255, 0.62);
+		border-radius: 50%;
+		display: block;
+		height: 42px;
+		position: absolute;
+		top: calc(50% - 35px);
+		width: 42px;
+		z-index: 2;
+	}
+
+	.gameplay-carousel__arrow--prev {
+		left: 10px;
+	}
+
+	.gameplay-carousel__arrow--next {
+		right: 10px;
+	}
+
+	.gameplay-carousel__dots {
+		bottom: 0;
+		display: flex;
+		gap: 8px;
+		justify-content: center;
+		left: 0;
+		position: absolute;
+		right: 0;
+	}
+
+	.gameplay-carousel__dots button {
+		background: rgba(6, 18, 60, 0.24);
+		border: 0;
+		border-radius: 50%;
+		height: 8px;
+		padding: 0;
+		width: 8px;
+	}
+
+	.gameplay-carousel__dots button[aria-current="true"] {
+		background: var(--color-accent);
+	}
+
+	.quote-row {
+		gap: 6px;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		margin-top: 36px;
+		max-width: none;
+		width: 100%;
+	}
+
+	.intro {
+		padding-bottom: 48px;
+	}
+
+	.intro__grid h2 span,
+	.physical__copy h2 span {
+		white-space: normal;
 	}
 
 	.details__showcase {
 		display: block;
 		margin-top: 44px;
+		margin-left: 0;
+		width: 100%;
 	}
 
 	.details__arrow {
@@ -233,9 +467,57 @@
 		margin-top: 36px;
 	}
 
+	.physical__media {
+		max-width: 100%;
+	}
+
 	.physical img {
-		max-width: 86%;
-		transform: rotate(-2deg);
+		margin-left: 0;
+		max-width: 100%;
+		transform: scale(2);
+		width: 100%;
+	}
+
+	.details__zoom {
+		bottom: 12px;
+		height: 42px;
+		right: 12px;
+		width: 42px;
+	}
+
+	.details-modal__content {
+		grid-template-columns: 46px minmax(0, 1fr) 46px;
+		padding: 54px 8px 42px;
+	}
+
+	.details-modal__figure img {
+		max-height: 82vh;
+		max-width: calc(100vw - 108px);
+	}
+
+	.details-modal__arrow {
+		background-size: auto 20px;
+		height: 42px;
+		width: 42px;
+	}
+
+	.details-modal__close {
+		height: 40px;
+		right: 12px;
+		top: 10px;
+		width: 40px;
+	}
+
+	.details-modal__counter {
+		bottom: 12px;
+	}
+
+	.physical__media:focus .physical__image--closed {
+		opacity: 0;
+	}
+
+	.physical__media:focus .physical__image--open {
+		opacity: 1;
 	}
 
 	.footer-brand {
@@ -257,8 +539,8 @@
 	}
 
 	.cart-page__thumb {
-		height: auto;
-		min-height: 220px;
+		height: 280px;
+		min-height: 0;
 	}
 
 	.cart-page__item-actions {
@@ -292,6 +574,10 @@
 		margin-top: 40px;
 	}
 
+	.about-hero__title-line {
+		white-space: normal;
+	}
+
 	.about-video {
 		margin-top: 42px;
 	}
@@ -309,8 +595,30 @@
 		padding-top: 104px;
 	}
 
-	.contact-form {
-		padding: 18px;
+	.contact-section {
+		min-height: 0;
+		padding-bottom: 72px;
+	}
+
+	.contact-copy h1 {
+		font-size: clamp(2.75rem, 13vw, 3.6rem);
+	}
+
+	.contact-copy p {
+		font-size: 1rem;
+		margin-top: 22px;
+	}
+
+	.contact-grid {
+		margin-top: 20px;
+	}
+
+	.contact-form textarea {
+		min-height: 180px;
+	}
+
+	.contact-details {
+		gap: 30px;
 	}
 
 	.account-section {
@@ -366,6 +674,48 @@
 
 	.account-order__actions {
 		justify-content: flex-start;
+	}
+
+	.account-order-view__heading {
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 14px;
+	}
+
+	.account-order-view__heading h2 {
+		font-size: 2.55rem;
+	}
+
+	.account-order-view__status {
+		margin: 0;
+	}
+
+	.account-order-updates li {
+		grid-template-columns: 1fr;
+	}
+
+	.account-order-detail__layout,
+	.account-order-addresses__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.account-order-detail__item {
+		align-items: start;
+		grid-template-columns: 88px minmax(0, 1fr);
+	}
+
+	.account-order-detail__image {
+		height: 96px;
+	}
+
+	.account-order-detail__price {
+		grid-column: 2;
+	}
+
+	.account-order-detail__summary,
+	.account-order-address,
+	.account-order-updates {
+		padding: 18px;
 	}
 
 	.account-auth {

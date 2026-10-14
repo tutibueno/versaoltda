@@ -10,6 +10,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Make Stripe payment methods available only on the English storefront.
+ *
+ * This filter is also applied when Checkout Blocks requests its payment
+ * methods through the Store API.
+ *
+ * @param WC_Payment_Gateway[] $gateways Available payment gateways.
+ * @return WC_Payment_Gateway[]
+ */
+function versao_ltda_limit_stripe_to_english( $gateways ) {
+	if ( 'en_US' === determine_locale() ) {
+		return $gateways;
+	}
+
+	foreach ( $gateways as $gateway_id => $gateway ) {
+		$class_name = is_object( $gateway ) ? get_class( $gateway ) : '';
+
+		if ( false !== stripos( (string) $gateway_id, 'stripe' ) || false !== stripos( $class_name, 'stripe' ) ) {
+			unset( $gateways[ $gateway_id ] );
+		}
+	}
+
+	return $gateways;
+}
+add_filter( 'woocommerce_available_payment_gateways', 'versao_ltda_limit_stripe_to_english', 100 );
+
+/**
  * Find a WooCommerce product by its exact title.
  *
  * @param string $title Product title.
@@ -118,6 +144,261 @@ function versao_ltda_cart_count_fragment( $fragments ) {
 add_filter( 'woocommerce_add_to_cart_fragments', 'versao_ltda_cart_count_fragment' );
 
 /**
+ * Render a product image with a theme fallback when an imported attachment is missing.
+ *
+ * Database dumps can retain attachment metadata without the matching uploads volume.
+ * In that case WordPress still generates an image tag, but its source returns 404.
+ *
+ * @param WC_Product|null $product Product object.
+ * @param string          $product_name Accessible image description.
+ * @param string          $size WordPress image size.
+ * @return string
+ */
+function versao_ltda_get_order_product_image( $product, $product_name, $size = 'woocommerce_thumbnail' ) {
+	if ( $product instanceof WC_Product ) {
+		$image_id   = $product->get_image_id();
+		$image_url  = $image_id ? wp_get_attachment_image_url( $image_id, $size ) : '';
+		$image_file = $image_id ? get_attached_file( $image_id ) : '';
+
+		if ( $image_url && ( ! $image_file || file_exists( $image_file ) ) ) {
+			return wp_get_attachment_image(
+				$image_id,
+				$size,
+				false,
+				array(
+					'alt'     => $product_name,
+					'loading' => 'lazy',
+				)
+			);
+		}
+	}
+
+	return sprintf(
+		'<img src="%1$s" alt="%2$s" loading="lazy">',
+		esc_url( vltda_asset( 'images/product-photo.jpg' ) ),
+		esc_attr( $product_name )
+	);
+}
+
+/**
+ * Replace missing Checkout Blocks product images with the theme fallback.
+ *
+ * Valid local and externally hosted images are preserved. Imported attachment
+ * records whose original or generated thumbnail file is absent are discarded.
+ *
+ * @param array  $product_images Product image objects from the Store API.
+ * @param array  $cart_item Cart item data.
+ * @param string $cart_item_key Cart item key.
+ * @return array
+ */
+function versao_ltda_store_api_cart_item_images( $product_images, $cart_item, $cart_item_key ) {
+	$valid_images = array();
+	$upload_dir   = wp_get_upload_dir();
+	$upload_url   = isset( $upload_dir['baseurl'] ) ? trailingslashit( $upload_dir['baseurl'] ) : '';
+	$upload_path  = isset( $upload_dir['basedir'] ) ? trailingslashit( $upload_dir['basedir'] ) : '';
+
+	foreach ( (array) $product_images as $image ) {
+		if ( ! is_object( $image ) || ! isset( $image->id ) || empty( $image->src ) || empty( $image->thumbnail ) ) {
+			continue;
+		}
+
+		$image_urls_are_valid = true;
+		$uses_local_upload    = false;
+
+		foreach ( array( $image->src, $image->thumbnail ) as $image_url ) {
+			if ( ! $upload_url || 0 !== strpos( $image_url, $upload_url ) ) {
+				continue;
+			}
+
+			$uses_local_upload = true;
+			$relative_path = rawurldecode( strtok( substr( $image_url, strlen( $upload_url ) ), '?' ) );
+
+			if ( ! $relative_path || ! file_exists( $upload_path . wp_normalize_path( $relative_path ) ) ) {
+				$image_urls_are_valid = false;
+				break;
+			}
+		}
+
+		$image_id   = isset( $image->id ) ? absint( $image->id ) : 0;
+		$image_file = $image_id ? get_attached_file( $image_id ) : '';
+
+		if ( $uses_local_upload && $image_file && ! file_exists( $image_file ) ) {
+			$image_urls_are_valid = false;
+		}
+
+		if ( $image_urls_are_valid ) {
+			$valid_images[] = $image;
+		}
+	}
+
+	if ( $valid_images ) {
+		return $valid_images;
+	}
+
+	$product      = isset( $cart_item['data'] ) && $cart_item['data'] instanceof WC_Product ? $cart_item['data'] : null;
+	$product_name = $product ? $product->get_name() : __( 'Produto', 'versao-ltda-theme' );
+	$fallback_url = vltda_asset( 'images/product-photo.jpg' );
+
+	return array(
+		(object) array(
+			'id'               => 0,
+			'src'              => $fallback_url,
+			'thumbnail'        => $fallback_url,
+			'srcset'           => '',
+			'sizes'            => '',
+			'thumbnail_srcset' => '',
+			'thumbnail_sizes'  => '',
+			'name'             => $product_name,
+			'alt'              => $product_name,
+		),
+	);
+}
+add_filter( 'woocommerce_store_api_cart_item_images', 'versao_ltda_store_api_cart_item_images', 10, 3 );
+
+/**
+ * Complete the customer's location from the cart postcode.
+ *
+ * Checkout Blocks require more than the postcode before displaying shipping,
+ * so city, state and street are populated from the SuperFrete ViaCEP helper.
+ *
+ * @return void
+ */
+function versao_ltda_complete_shipping_address_from_postcode() {
+	if ( ! function_exists( 'WC' ) || ! WC()->customer ) {
+		return;
+	}
+
+	$postcode = WC()->customer->get_shipping_postcode();
+
+	if ( ! $postcode || ! class_exists( '\SuperFrete_API\Helpers\AddressHelper' ) ) {
+		return;
+	}
+
+	$address = \SuperFrete_API\Helpers\AddressHelper::get_address_from_postal_code( $postcode );
+
+	if ( ! is_array( $address ) || empty( $address['uf'] ) || empty( $address['localidade'] ) ) {
+		return;
+	}
+
+	$state  = wc_clean( $address['uf'] );
+	$city   = wc_clean( $address['localidade'] );
+	$street = isset( $address['logradouro'] ) ? wc_clean( $address['logradouro'] ) : '';
+
+	WC()->customer->set_shipping_country( 'BR' );
+	WC()->customer->set_shipping_state( $state );
+	WC()->customer->set_shipping_city( $city );
+	WC()->customer->set_shipping_postcode( wc_format_postcode( $postcode, 'BR' ) );
+
+	if ( $street ) {
+		WC()->customer->set_shipping_address_1( $street );
+	}
+
+	if ( ! WC()->customer->get_billing_first_name() ) {
+		WC()->customer->set_billing_country( 'BR' );
+		WC()->customer->set_billing_state( $state );
+		WC()->customer->set_billing_city( $city );
+		WC()->customer->set_billing_postcode( wc_format_postcode( $postcode, 'BR' ) );
+
+		if ( $street ) {
+			WC()->customer->set_billing_address_1( $street );
+		}
+	}
+
+	WC()->customer->save();
+}
+
+/**
+ * Run WooCommerce's shipping calculator for the custom cart template.
+ *
+ * @return void
+ */
+function versao_ltda_calculate_cart_shipping() {
+	if ( ! isset( $_POST['calc_shipping'] ) || ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return;
+	}
+
+	$nonce = isset( $_POST['woocommerce-shipping-calculator-nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['woocommerce-shipping-calculator-nonce'] ) ) : '';
+
+	if ( ! wp_verify_nonce( $nonce, 'woocommerce-shipping-calculator' ) && ! wp_verify_nonce( $nonce, 'woocommerce-cart' ) ) {
+		wc_add_notice( __( 'Não foi possível calcular o frete. Atualize a página e tente novamente.', 'versao-ltda-theme' ), 'error' );
+		return;
+	}
+
+	if ( class_exists( 'WC_Shortcode_Cart' ) ) {
+		WC_Shortcode_Cart::calculate_shipping();
+		versao_ltda_complete_shipping_address_from_postcode();
+		$packages       = WC()->shipping()->calculate_shipping( WC()->cart->get_shipping_packages() );
+		$chosen_methods = WC()->session->get( 'chosen_shipping_methods', array() );
+
+		foreach ( $packages as $package_index => $package ) {
+			if ( empty( $package['rates'] ) ) {
+				continue;
+			}
+
+			$current_rate = isset( $chosen_methods[ $package_index ] ) ? $chosen_methods[ $package_index ] : '';
+
+			if ( ! isset( $package['rates'][ $current_rate ] ) ) {
+				$chosen_methods[ $package_index ] = array_key_first( $package['rates'] );
+			}
+		}
+
+		WC()->session->set( 'chosen_shipping_methods', $chosen_methods );
+		WC()->cart->calculate_totals();
+	}
+
+	wp_safe_redirect( wc_get_cart_url() );
+	exit;
+}
+add_action( 'template_redirect', 'versao_ltda_calculate_cart_shipping', 4 );
+
+/**
+ * Persist the shipping rate selected in the custom cart template.
+ *
+ * WooCommerce then reuses the chosen method and its cost during checkout.
+ *
+ * @return void
+ */
+function versao_ltda_update_cart_shipping_method() {
+	if ( ! isset( $_POST['versao_ltda_update_shipping'] ) || ! function_exists( 'WC' ) || ! WC()->session ) {
+		return;
+	}
+
+	$nonce = isset( $_POST['woocommerce-cart-nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['woocommerce-cart-nonce'] ) ) : '';
+
+	if ( ! wp_verify_nonce( $nonce, 'woocommerce-cart' ) ) {
+		wc_add_notice( __( 'Não foi possível atualizar o frete. Tente novamente.', 'versao-ltda-theme' ), 'error' );
+		return;
+	}
+
+	$posted_methods = isset( $_POST['shipping_method'] ) ? (array) wp_unslash( $_POST['shipping_method'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+	$posted_methods = array_map( 'wc_clean', $posted_methods );
+	$packages       = WC()->shipping()->get_packages();
+	$chosen_methods = array();
+
+	foreach ( $posted_methods as $package_index => $rate_id ) {
+		$package_index = absint( $package_index );
+
+		if ( isset( $packages[ $package_index ]['rates'][ $rate_id ] ) ) {
+			$chosen_methods[ $package_index ] = $rate_id;
+		}
+	}
+
+	if ( empty( $chosen_methods ) ) {
+		return;
+	}
+
+	WC()->session->set( 'chosen_shipping_methods', $chosen_methods );
+
+	if ( WC()->cart ) {
+		WC()->cart->calculate_totals();
+	}
+
+	wp_safe_redirect( wc_get_cart_url() );
+	exit;
+}
+add_action( 'template_redirect', 'versao_ltda_update_cart_shipping_method', 5 );
+
+/**
  * Default game catalog used to bootstrap WooCommerce products for the theme.
  *
  * @return array
@@ -152,6 +433,27 @@ function versao_ltda_get_default_games() {
 }
 
 /**
+ * Allow quantity selection for games managed by the theme catalog.
+ *
+ * This runtime filter keeps the storefront consistent while older product
+ * objects or persistent caches still contain the previous individual-sale flag.
+ *
+ * @param bool            $sold_individually Current individual-sale state.
+ * @param WC_Product|null $product Product being evaluated.
+ * @return bool
+ */
+function versao_ltda_allow_catalog_product_quantities( $sold_individually, $product ) {
+	if ( ! $product instanceof WC_Product ) {
+		return $sold_individually;
+	}
+
+	$catalog_skus = array_column( versao_ltda_get_default_games(), 'sku' );
+
+	return in_array( $product->get_sku(), $catalog_skus, true ) ? false : $sold_individually;
+}
+add_filter( 'woocommerce_is_sold_individually', 'versao_ltda_allow_catalog_product_quantities', 10, 2 );
+
+/**
  * Create the base WooCommerce products expected by the visual catalog.
  *
  * @return void
@@ -162,7 +464,41 @@ function versao_ltda_ensure_default_products() {
 	}
 
 	foreach ( versao_ltda_get_default_games() as $game ) {
-		if ( wc_get_product_id_by_sku( $game['sku'] ) ) {
+		$product_id = wc_get_product_id_by_sku( $game['sku'] );
+
+		if ( $product_id ) {
+			$product = wc_get_product( $product_id );
+
+			if ( $product instanceof WC_Product ) {
+				$should_save = false;
+
+				if ( $product->is_sold_individually() ) {
+					$product->set_sold_individually( false );
+					$should_save = true;
+				}
+
+				if ( '001' === $game['sku'] ) {
+					if ( $product->managing_stock() ) {
+						$product->set_manage_stock( false );
+						$should_save = true;
+					}
+
+					if ( 'instock' !== $product->get_stock_status() ) {
+						$product->set_stock_status( 'instock' );
+						$should_save = true;
+					}
+
+					if ( $product->get_meta( '_versao_ltda_card_state' ) ) {
+						$product->delete_meta_data( '_versao_ltda_card_state' );
+						$should_save = true;
+					}
+				}
+
+				if ( $should_save ) {
+					$product->save();
+				}
+			}
+
 			continue;
 		}
 
@@ -178,7 +514,7 @@ function versao_ltda_ensure_default_products() {
 		$product->set_price( $game['price'] );
 		$product->set_manage_stock( false );
 		$product->set_stock_status( $game['stock_status'] );
-		$product->set_sold_individually( true );
+		$product->set_sold_individually( false );
 		$product->update_meta_data( '_versao_ltda_edition', __( 'Pre-Order Version', 'versao-ltda-theme' ) );
 
 		if ( $game['state'] ) {
@@ -348,6 +684,72 @@ function versao_ltda_redirect_account_address_index() {
 add_action( 'template_redirect', 'versao_ltda_redirect_account_address_index', 20 );
 
 /**
+ * Get the short name used in account greetings.
+ *
+ * @param WP_User|null $user User object. Defaults to the current user.
+ * @return string
+ */
+function versao_ltda_get_account_first_name( $user = null ) {
+	$user = $user instanceof WP_User ? $user : wp_get_current_user();
+
+	if ( ! $user->exists() ) {
+		return __( '[Nome]', 'versao-ltda-theme' );
+	}
+
+	$first_name = trim( (string) $user->first_name );
+
+	if ( ! $first_name ) {
+		$first_name = trim( (string) get_user_meta( $user->ID, 'billing_first_name', true ) );
+	}
+
+	if ( ! $first_name ) {
+		$display_name = trim( (string) $user->display_name );
+		$name_parts   = preg_split( '/\s+/u', $display_name );
+		$first_name   = $name_parts && $name_parts[0] ? $name_parts[0] : $user->user_login;
+	}
+
+	return $first_name;
+}
+
+/**
+ * Rename the address complement label without changing its value or placeholder.
+ *
+ * @param array $fields Default WooCommerce address fields.
+ * @return array
+ */
+function versao_ltda_customize_default_address_fields( $fields ) {
+	if ( isset( $fields['address_2'] ) ) {
+		$fields['address_2']['label'] = __( 'Complemento (opcional)', 'versao-ltda-theme' );
+	}
+
+	return $fields;
+}
+add_filter( 'woocommerce_default_address_fields', 'versao_ltda_customize_default_address_fields' );
+
+/**
+ * Rename the complement field rendered by Checkout Blocks.
+ *
+ * Checkout Blocks builds core field labels from WooCommerce translations and
+ * does not consume the classic address field label filter above.
+ *
+ * @param string $translation Translated text.
+ * @param string $text Original WooCommerce text.
+ * @return string
+ */
+function versao_ltda_translate_checkout_address_2_label( $translation, $text ) {
+	if ( 'Apartment, suite, etc.' === $text ) {
+		return __( 'Complemento', 'versao-ltda-theme' );
+	}
+
+	if ( 'Apartment, suite, etc. (optional)' === $text ) {
+		return __( 'Complemento (opcional)', 'versao-ltda-theme' );
+	}
+
+	return $translation;
+}
+add_filter( 'gettext_woocommerce', 'versao_ltda_translate_checkout_address_2_label', 10, 2 );
+
+/**
  * Match the billing address fields to the account design while preserving the
  * native WooCommerce validation and persistence flow.
  *
@@ -358,16 +760,19 @@ function versao_ltda_customize_billing_address_fields( $fields ) {
 	unset( $fields['billing_company'] );
 
 	$field_settings = array(
-		'billing_first_name' => array( 'Nome', 10, 'account-address-field--half' ),
-		'billing_last_name'  => array( 'Sobrenome', 20, 'account-address-field--half' ),
-		'billing_email'      => array( 'E-mail', 30, 'account-address-field--wide' ),
-		'billing_phone'      => array( 'Telefone', 40, 'account-address-field--narrow' ),
-		'billing_address_1'  => array( 'Endereço', 50, 'account-address-field--wide' ),
-		'billing_address_2'  => array( 'Complemento', 60, 'account-address-field--narrow' ),
-		'billing_city'       => array( 'Cidade', 70, 'account-address-field--third' ),
-		'billing_state'      => array( 'Estado', 80, 'account-address-field--third' ),
-		'billing_postcode'   => array( 'CEP', 90, 'account-address-field--third' ),
-		'billing_country'    => array( 'País', 100, 'account-address-field--full' ),
+		'billing_first_name'   => array( 'Nome', 10, 'account-address-field--half' ),
+		'billing_last_name'    => array( 'Sobrenome', 20, 'account-address-field--half' ),
+		'billing_document'     => array( 'CPF/CNPJ', 30, 'account-address-field--narrow' ),
+		'billing_email'        => array( 'E-mail', 40, 'account-address-field--wide' ),
+		'billing_phone'        => array( 'Telefone', 50, 'account-address-field--narrow' ),
+		'billing_address_1'    => array( 'Endereço', 60, 'account-address-field--wide' ),
+		'billing_address_2'    => array( 'Complemento (opcional)', 70, 'account-address-field--narrow' ),
+		'billing_city'         => array( 'Cidade', 80, 'account-address-field--third' ),
+		'billing_state'        => array( 'Estado', 90, 'account-address-field--third' ),
+		'billing_postcode'     => array( 'CEP', 100, 'account-address-field--third' ),
+		'billing_country'      => array( 'País', 110, 'account-address-field--full' ),
+		'billing_number'       => array( 'Número', 120, 'account-address-field--narrow' ),
+		'billing_neighborhood' => array( 'Bairro', 130, 'account-address-field--narrow' ),
 	);
 
 	foreach ( $field_settings as $key => $settings ) {
@@ -386,7 +791,8 @@ function versao_ltda_customize_billing_address_fields( $fields ) {
 	}
 
 	if ( isset( $fields['billing_address_2'] ) ) {
-		$fields['billing_address_2']['placeholder'] = __( 'Apartamento, bloco...', 'versao-ltda-theme' );
+		$fields['billing_address_2']['label_class'] = array();
+		$fields['billing_address_2']['placeholder'] = __( 'Apartamento, suíte, bloco etc.', 'versao-ltda-theme' );
 	}
 
 	if ( isset( $fields['billing_postcode'] ) ) {
@@ -395,7 +801,7 @@ function versao_ltda_customize_billing_address_fields( $fields ) {
 
 	return $fields;
 }
-add_filter( 'woocommerce_billing_fields', 'versao_ltda_customize_billing_address_fields' );
+add_filter( 'woocommerce_billing_fields', 'versao_ltda_customize_billing_address_fields', 30 );
 
 /**
  * Get catalog products from WooCommerce.
@@ -442,12 +848,66 @@ function versao_ltda_get_catalog_products( $args = array() ) {
 }
 
 /**
+ * Check whether a product can be reserved immediately.
+ *
+ * @param WC_Product $product Product object.
+ * @return bool
+ */
+function versao_ltda_product_can_be_reserved( $product ) {
+	if ( ! $product instanceof WC_Product ) {
+		return false;
+	}
+
+	$state = $product->get_meta( '_versao_ltda_card_state' );
+
+	return ! in_array( $state, array( 'soon', 'sold' ), true )
+		&& $product->is_purchasable()
+		&& $product->is_in_stock();
+}
+
+/**
+ * Check whether sales are intentionally paused for a product.
+ *
+ * @param WC_Product $product Product object.
+ * @return bool
+ */
+function versao_ltda_product_sales_are_paused( $product ) {
+	if ( ! $product instanceof WC_Product ) {
+		return false;
+	}
+
+	return '001' === $product->get_sku() || 'demons-of-asteborg' === $product->get_slug();
+}
+
+/**
+ * Prevent paused products from being purchased through direct cart URLs.
+ *
+ * @param bool       $is_purchasable Current purchasable state.
+ * @param WC_Product $product Product object.
+ * @return bool
+ */
+function versao_ltda_pause_product_purchases( $is_purchasable, $product ) {
+	return versao_ltda_product_sales_are_paused( $product ) ? false : $is_purchasable;
+}
+add_filter( 'woocommerce_is_purchasable', 'versao_ltda_pause_product_purchases', 10, 2 );
+
+/**
  * Get product card action data from a product object.
  *
  * @param WC_Product $product Product object.
  * @return array
  */
 function versao_ltda_get_product_action_from_product( $product ) {
+	if ( versao_ltda_product_sales_are_paused( $product ) ) {
+		return array(
+			'label'      => __( 'Pré venda esgotada', 'versao-ltda-theme' ),
+			'class'      => 'is-paused',
+			'href'       => get_permalink( $product->get_id() ),
+			'attributes' => ' aria-disabled="true"',
+			'disabled'   => true,
+		);
+	}
+
 	$state = $product->get_meta( '_versao_ltda_card_state' );
 
 	if ( 'soon' === $state ) {
@@ -486,7 +946,7 @@ function versao_ltda_get_product_action_from_product( $product ) {
  * @param string     $wishlist_mode Wishlist action mode.
  * @return void
  */
-function versao_ltda_render_product_card( $product, $index = 1, $wishlist_mode = 'auto' ) {
+function versao_ltda_render_product_card( $product, $index = 1, $wishlist_mode = 'auto', $show_action = true ) {
 	if ( ! $product instanceof WC_Product ) {
 		return;
 	}
@@ -519,7 +979,7 @@ function versao_ltda_render_product_card( $product, $index = 1, $wishlist_mode =
 			<?php if ( has_post_thumbnail( $product->get_id() ) ) : ?>
 				<?php echo wp_kses_post( $product->get_image( 'woocommerce_thumbnail' ) ); ?>
 			<?php else : ?>
-				<img src="<?php echo esc_url( vltda_asset( 'images/product-box.jpg' ) ); ?>" alt="<?php echo esc_attr( $product_name ); ?>">
+				<img src="<?php echo esc_url( vltda_asset( 'images/product-photo.jpg' ) ); ?>" alt="<?php echo esc_attr( $product_name ); ?>">
 			<?php endif; ?>
 		</a>
 		<p class="product-card__label"><?php echo esc_html( $label ); ?></p>
@@ -529,9 +989,17 @@ function versao_ltda_render_product_card( $product, $index = 1, $wishlist_mode =
 		<p><?php esc_html_e( 'Plataforma:', 'versao-ltda-theme' ); ?> <?php echo esc_html( $platform ); ?><br><?php echo esc_html( $edition ); ?></p>
 		<strong><?php echo wp_kses_post( $product->get_price_html() ?: wc_price( 399 ) ); ?></strong>
 		<div class="product-card__actions">
-			<a class="button product-card__button <?php echo esc_attr( trim( $action['class'] ) ); ?>" href="<?php echo esc_url( $action['href'] ); ?>"<?php echo $action['attributes']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-				<?php echo esc_html( $action['label'] ); ?>
-			</a>
+			<?php if ( $show_action ) : ?>
+				<?php if ( ! empty( $action['disabled'] ) ) : ?>
+					<button class="button product-card__button <?php echo esc_attr( trim( $action['class'] ) ); ?>" type="button" disabled>
+						<?php echo esc_html( $action['label'] ); ?>
+					</button>
+				<?php else : ?>
+					<a class="button product-card__button <?php echo esc_attr( trim( $action['class'] ) ); ?>" href="<?php echo esc_url( $action['href'] ); ?>"<?php echo $action['attributes']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+						<?php echo esc_html( $action['label'] ); ?>
+					</a>
+				<?php endif; ?>
+			<?php endif; ?>
 			<a class="product-card__wishlist<?php echo 'remove' === $wishlist_action ? ' is-active is-remove' : ''; ?>" href="<?php echo esc_url( $wishlist_url ); ?>" aria-label="<?php echo esc_attr( $wishlist_label ); ?>" title="<?php echo esc_attr( $wishlist_label ); ?>">
 				<span aria-hidden="true"></span>
 			</a>

@@ -18,9 +18,9 @@ get_header();
 			</nav>
 
 			<h1>
-				<?php esc_html_e( 'O digital é prático.', 'versao-ltda-theme' ); ?><br>
-				<?php esc_html_e( 'O físico é', 'versao-ltda-theme' ); ?><br>
-				<span><?php esc_html_e( 'memorável.', 'versao-ltda-theme' ); ?></span>
+				<span class="about-hero__title-line"><?php esc_html_e( 'O digital é prático.', 'versao-ltda-theme' ); ?></span>
+				<span class="about-hero__title-line"><?php esc_html_e( 'O físico é', 'versao-ltda-theme' ); ?></span>
+				<span class="about-hero__title-line about-hero__title-line--accent"><?php esc_html_e( 'memorável.', 'versao-ltda-theme' ); ?></span>
 			</h1>
 
 			<div class="about-hero__copy">
@@ -39,11 +39,17 @@ get_header();
 			</div>
 
 			<div class="about-video">
-				<iframe
-					src="https://www.youtube.com/embed/BoebDxvaWoo"
-					title="<?php esc_attr_e( 'Vídeo institucional da Versão LTDA', 'versao-ltda-theme' ); ?>"
-					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-					allowfullscreen></iframe>
+				<?php $about_video_src = ( function_exists( 'determine_locale' ) ? determine_locale() : get_locale() ) === 'en_US' ? vltda_asset( 'videos/versaoltda-sobre-en.mov' ) : vltda_asset( 'videos/versaoltda-sobre-pt.mov' ); ?>
+				<video
+					controls
+					playsinline
+					preload="metadata"
+					poster="<?php echo esc_url( vltda_asset( 'images/thumb-sobre-ltda.jpg' ) ); ?>"
+					aria-label="<?php esc_attr_e( 'Vídeo institucional da Versão LTDA', 'versao-ltda-theme' ); ?>"
+				>
+					<source src="<?php echo esc_url( $about_video_src ); ?>" type="video/quicktime">
+					<?php esc_html_e( 'Seu navegador não oferece suporte à reprodução deste vídeo.', 'versao-ltda-theme' ); ?>
+				</video>
 			</div>
 
 			<div class="about-powered">
