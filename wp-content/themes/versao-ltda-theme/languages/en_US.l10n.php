@@ -140,7 +140,7 @@ return array(
 		'Edição regular - cartucho branco' => 'Regular edition - white cartridge',
 		'Cartucho para Mega Drive / Genesis' => 'Cartridge for Mega Drive / Genesis',
 		'Cartucho para Mega Drive' => 'Cartridge for Mega Drive',
-		'Versão especial durante a Pré-Order em shell cromado em prata.' => 'Special pre-order version in a silver chrome shell.',
+		'Cartucho branco para Mega Drive / Genesis, produzido com tecnologia Mark1.' => 'White cartridge for Mega Drive / Genesis, manufactured using Mark1 technology.',
 		'Embalagem Premium' => 'Premium Packaging',
 		'Acabamento rígido, impressão especial e proteção para coleção.' => 'Rigid construction, special printing, and collector-grade protection.',
 		'Conteúdo Colecionável' => 'Collectible Contents',
