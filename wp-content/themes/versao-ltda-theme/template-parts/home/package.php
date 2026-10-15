@@ -86,7 +86,7 @@ $package_slides = array(
 			</div>
 		</dialog>
 
-		<p class="caption"><?php esc_html_e( 'Conteúdo completo da Edição #001 - Edição Especial de Pré-Venda', 'versao-ltda-theme' ); ?></p>
+		<p class="caption"><?php esc_html_e( 'Conteúdo completo da Edição #001 - Demons of Asteborg', 'versao-ltda-theme' ); ?></p>
 
 		<?php versao_ltda_home_features(); ?>
 	</div>

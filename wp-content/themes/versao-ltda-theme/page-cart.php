@@ -112,7 +112,7 @@ $display_cart_total      = (float) WC()->cart->get_total( 'edit' ) + $selected_s
 
 								<div class="cart-page__item-content">
 									<p class="cart-page__item-label">
-										<?php echo esc_html( $product_label . ' - ' . $edition_label ); ?>
+										<?php echo esc_html( $product_label /*. ' - ' . $edition_label*/ ); ?>
 									</p>
 
 									<h2>

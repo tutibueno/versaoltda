@@ -193,7 +193,7 @@ while ( have_posts() ) :
 							<?php elseif ( $is_waiting_preorder ) : ?>
 								<?php esc_html_e( 'A compra será liberada em 08.08.26.', 'versao-ltda-theme' ); ?>
 							<?php else : ?>
-								<?php esc_html_e( 'Pré-venda limitada. Envio estimado em 30 dias.', 'versao-ltda-theme' ); ?>
+								<?php esc_html_e( '', 'versao-ltda-theme' ); ?>
 							<?php endif; ?>
 						</p>
 

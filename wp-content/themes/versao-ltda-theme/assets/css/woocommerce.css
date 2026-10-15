@@ -480,6 +480,13 @@
 	z-index: 80;
 }
 
+/* Cart stock and quantity notices belong in the cart flow, not as persistent toasts. */
+.cart-page .woocommerce-notices-wrapper {
+	margin-bottom: 28px;
+	position: static;
+	width: auto;
+}
+
 .woocommerce-error,
 .woocommerce-info,
 .woocommerce-message {
