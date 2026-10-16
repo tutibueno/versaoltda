@@ -10,9 +10,9 @@
 		<div class="physical__copy">
 			<p class="section-kicker"><?php esc_html_e( 'Edição #001 - Versão Regular', 'versao-ltda-theme' ); ?></p>
 			<h2>
-				<span><?php esc_html_e( 'Cartucho cromado', 'versao-ltda-theme' ); ?></span>
-				<span><?php esc_html_e( 'especial somente', 'versao-ltda-theme' ); ?></span>
-				<span><?php esc_html_e( 'na pré-venda.', 'versao-ltda-theme' ); ?></span>
+				<span><?php esc_html_e( 'Uma edição', 'versao-ltda-theme' ); ?></span>
+				<span><?php esc_html_e( 'completa para', 'versao-ltda-theme' ); ?></span>
+				<span><?php esc_html_e( 'sua coleção.', 'versao-ltda-theme' ); ?></span>
 			</h2>
 			<p><?php esc_html_e( 'Demons of Asteborg, pela Versão LTDA, agora em cartucho branco, com a mesma embalagem premium e todos os itens colecionáveis da versão de pré-venda.', 'versao-ltda-theme' ); ?></p>
 			<a class="button button--primary" href="<?php echo esc_url( home_url( '/produto/demons-of-asteborg/' ) ); ?>">

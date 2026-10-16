@@ -822,7 +822,7 @@ function versao_ltda_render_product_card($product, $index = 1, $wishlist_mode = 
 	}
 ?>
 	<article class="product-card">
-		<a class="product-card__image-link" href="<?php echo esc_url(get_permalink($product->get_id())); ?>" aria-label="<?php echo esc_attr($product_name); ?>">
+		<a class="product-card__image-link" href="<?php echo esc_url(get_permalink(/*$product->get_id()*/246)); ?>" aria-label="<?php echo esc_attr($product_name); ?>">
 			<?php if (has_post_thumbnail($product->get_id())) : ?>
 				<?php echo wp_kses_post($product->get_image('woocommerce_thumbnail')); ?>
 			<?php else : ?>

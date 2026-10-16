@@ -298,10 +298,10 @@ while ( have_posts() ) :
 					<?php
 					$faqs = array(
 						__( 'Este cartucho funciona em quais consoles?', 'versao-ltda-theme' ) => __( 'O cartucho é compatível com consoles Mega Drive e Genesis originais que aceitem o padrão da edição.', 'versao-ltda-theme' ),
-						__( 'Quando o produto será enviado?', 'versao-ltda-theme' ) => __( 'O envio está previsto para até 30 dias após a confirmação da produção da pré-venda.', 'versao-ltda-theme' ),
-						__( 'Esta é uma pré-venda?', 'versao-ltda-theme' ) => __( 'Sim. A reserva garante uma unidade da tiragem especial antes do lançamento.', 'versao-ltda-theme' ),
+						__( 'Quando o produto será enviado?', 'versao-ltda-theme' ) => __( 'Após a compra, o pedido pode demorar até uma semana para ser enviado. Estoque limitado.', 'versao-ltda-theme' ),
+						__( 'Esta edição é numerada?', 'versao-ltda-theme' ) => __( 'Não. A numeração foi exclusiva da edição de pré-venda.', 'versao-ltda-theme' ),
 						__( 'As imagens são finais?', 'versao-ltda-theme' ) => __( 'As imagens representam o projeto da edição e podem receber pequenos ajustes de produção.', 'versao-ltda-theme' ),
-						__( 'O cartucho cromado será vendido depois?', 'versao-ltda-theme' ) => __( 'O acabamento cromado é exclusivo desta campanha de pré-venda, enquanto durarem as unidades.', 'versao-ltda-theme' ),
+						__( 'Qual é a diferença em relação à versão de pré-venda?', 'versao-ltda-theme' ) => __( 'Esta edição acompanha o cartucho branco e não possui numeração. A embalagem, os demais itens e o conteúdo do jogo são os mesmos da Chrome Edition oferecida na pré-venda.', 'versao-ltda-theme' ),
 						__( 'Ainda tem dúvidas?', 'versao-ltda-theme' ) => __( 'Entre em contato com nossa equipe pela página de contato para receber ajuda.', 'versao-ltda-theme' ),
 					);
 					foreach ( $faqs as $question => $answer ) :
